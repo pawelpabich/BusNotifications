@@ -61,8 +61,6 @@
     <Compile Include="CommandHandler.cs" />
     <Compile Include="ConfigurationSource.cs" />
     <Compile Include="EndpointConfig.cs" />
-    <Compile Include="NotifyAboutMessageFailures.cs" />
-    <Compile Include="NotifyAboutToErrorQueue.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

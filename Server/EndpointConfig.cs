@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reactive.Concurrency;
 using NServiceBus;
+using NServiceBus.Faults;
 using NServiceBus.Features;
 
 namespace Server
@@ -31,22 +32,37 @@ namespace Server
             configuration.UsePersistence<InMemoryPersistence>();
             configuration.CustomConfigurationSource(new ConfigurationSource(endpointName));
             configuration.DisableFeature<SecondLevelRetries>();
-            configuration.LicensePath(@"C:\Code\PortalPOC\Trunk\Source\ServicesPortal.DataWarehouse\bin\Debug\NServiceBusLicense.xml");           
+            configuration.LicensePath(@"C:\Code\PortalPOC\Trunk\Source\ServicesPortal.DataWarehouse\bin\Debug\NServiceBusLicense.xml");
+
+            streams.Add(notifications.Errors.MessageHasFailedAFirstLevelRetryAttempt.Subscribe(OnNext));
+            streams.Add(notifications.Errors.MessageSentToErrorQueue.Subscribe(OnNext));
+
+            configuration.RegisterComponents(c => c.RegisterSingleton(notifications));
         }
 
         public void Start()
         {
-            streams.Add(Synchronization.SubscribeOn(notifications.Errors.MessageHasFailedAFirstLevelRetryAttempt, System.Reactive.Concurrency.Scheduler.Default).Subscribe(new NotifyAboutMessageFailures()));
-            streams.Add(Synchronization.SubscribeOn(notifications.Errors.MessageSentToErrorQueue, System.Reactive.Concurrency.Scheduler.Default).Subscribe(new NotifyAboutToErrorQueue()));
+            //Subscription here did not work....
+            //streams.Add(notifications.Errors.MessageHasFailedAFirstLevelRetryAttempt.Subscribe(OnNext));
+            //streams.Add(notifications.Errors.MessageSentToErrorQueue.Subscribe(OnNext));
         }
 
         public void Stop()
         {
-
             foreach (var stream in streams)
             {
                 stream.Dispose();
             }
+        }
+
+        public static void OnNext(FirstLevelRetry value)
+        {
+            Console.WriteLine("OnNext FirstLevelRetry:" + value.Exception.ToString());
+        }
+
+        public static void OnNext(FailedMessage value)
+        {
+            Console.WriteLine("OnNext FailedMessage:" + value.Exception.ToString());
         }
     }
 }
